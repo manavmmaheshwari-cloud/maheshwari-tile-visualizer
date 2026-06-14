@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
@@ -45,9 +45,7 @@ function Room({
       <ambientLight intensity={2} />
 
       {showFloor && (
-        <mesh
-          rotation={[-Math.PI / 2, 0, 0]}
-        >
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry
             args={[roomLength, roomWidth]}
           />
@@ -121,6 +119,36 @@ function Room({
 }
 
 export default function App() {
+  const [isMobile, setIsMobile] =
+    useState(window.innerWidth < 768);
+
+  const [showPanel, setShowPanel] =
+    useState(window.innerWidth >= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile =
+        window.innerWidth < 768;
+
+      setIsMobile(mobile);
+
+      if (!mobile) {
+        setShowPanel(true);
+      }
+    };
+
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
+
+    return () =>
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
+  }, []);
+
   const [floorImageUrl,
     setFloorImageUrl] =
     useState("/elbis-multi.jpg");
@@ -129,7 +157,6 @@ export default function App() {
     setWallImageUrl] =
     useState("/elbis-multi.jpg");
 
-  // INCHES
   const [lengthInch,
     setLengthInch] =
     useState(120);
@@ -158,26 +185,9 @@ export default function App() {
     setWastagePercent] =
     useState(10);
 
-  const [doorWidth,
-    setDoorWidth] =
-    useState(36);
-
-  const [doorHeight,
-    setDoorHeight] =
-    useState(84);
-
-  const [windowWidth,
-    setWindowWidth] =
-    useState(48);
-
-  const [windowHeight,
-    setWindowHeight] =
-    useState(36);
-
   const [viewMode,
     setViewMode] =
     useState("both");
-
   const roomLength =
     lengthInch * 0.0254;
 
@@ -192,6 +202,7 @@ export default function App() {
 
   const tileHeight =
     tileHeightInch * 0.0254;
+
   const roomArea =
     (lengthInch * widthInch) / 144;
 
@@ -249,304 +260,260 @@ export default function App() {
     }
   };
 
+  const inputStyle = {
+    width: "100%",
+    padding: "10px",
+    boxSizing: "border-box",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+  };
+
   return (
     <>
-      <div
+      <button
+        onClick={() =>
+          setShowPanel(!showPanel)
+        }
         style={{
           position: "absolute",
           top: 10,
-          left: 10,
-          zIndex: 100,
-          background: "white",
-          padding: 15,
-          width: 320,
-          borderRadius: 10,
-          maxHeight: "90vh",
-          overflowY: "auto",
+          right: 10,
+          zIndex: 999,
+          padding: "10px 14px",
+          borderRadius: 8,
+          border: "none",
+          background: "#1976d2",
+          color: "white",
+          cursor: "pointer",
         }}
       >
-        <h2>Tile Visualizer V2</h2>
+        ☰ Menu
+      </button>
 
-        <h4>Bathroom Preset</h4>
-
-        <select
-          onChange={(e) => {
-            const preset =
-              bathroomPresets[e.target.value];
-
-            if (preset) {
-              setLengthInch(
-                preset.length
-              );
-
-              setWidthInch(
-                preset.width
-              );
-
-              setHeightInch(
-                preset.height
-              );
-            }
+      {showPanel && (
+        <div
+          style={{
+            position: "absolute",
+            top: isMobile ? 0 : 10,
+            left: isMobile ? 0 : 10,
+            zIndex: 100,
+            background: "white",
+            padding: 15,
+            width: isMobile
+              ? "100vw"
+              : 320,
+            maxWidth: "320px",
+            borderRadius:
+              isMobile ? 0 : 10,
+            maxHeight: isMobile
+              ? "50vh"
+              : "90vh",
+            overflowY: "auto",
+            boxShadow:
+              "0 0 10px rgba(0,0,0,0.2)",
           }}
         >
-          <option>Select</option>
-          <option>Small</option>
-          <option>Medium</option>
-          <option>Large</option>
-        </select>
+          <h2>
+            Tile Visualizer Mobile
+          </h2>
 
-        <hr />
+          <h4>Bathroom Preset</h4>
 
-        <h4>Floor Tile</h4>
+          <select
+            style={inputStyle}
+            onChange={(e) => {
+              const preset =
+                bathroomPresets[
+                  e.target.value
+                ];
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFloorUpload}
-        />
+              if (preset) {
+                setLengthInch(
+                  preset.length
+                );
+                setWidthInch(
+                  preset.width
+                );
+                setHeightInch(
+                  preset.height
+                );
+              }
+            }}
+          >
+            <option>Select</option>
+            <option>Small</option>
+            <option>Medium</option>
+            <option>Large</option>
+          </select>
 
-        <br />
-        <br />
+          <hr />
 
-        <h4>Wall Tile</h4>
+          <h4>Floor Tile</h4>
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleWallUpload}
-        />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={
+              handleFloorUpload
+            }
+            style={inputStyle}
+          />
 
-        <hr />
+          <br />
+          <br />
 
-        <label>
-          Room Length (inch)
-        </label>
+          <h4>Wall Tile</h4>
 
-        <input
-          type="number"
-          value={lengthInch}
-          onChange={(e) =>
-            setLengthInch(
-              Number(e.target.value)
-            )
-          }
-        />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={
+              handleWallUpload
+            }
+            style={inputStyle}
+          />
 
-        <br />
-        <br />
+          <hr />
+          <label>Room Length (inch)</label>
+          <input
+            type="number"
+            value={lengthInch}
+            onChange={(e) =>
+              setLengthInch(
+                Number(e.target.value)
+              )
+            }
+            style={inputStyle}
+          />
 
-        <label>
-          Room Width (inch)
-        </label>
+          <br /><br />
 
-        <input
-          type="number"
-          value={widthInch}
-          onChange={(e) =>
-            setWidthInch(
-              Number(e.target.value)
-            )
-          }
-        />
+          <label>Room Width (inch)</label>
+          <input
+            type="number"
+            value={widthInch}
+            onChange={(e) =>
+              setWidthInch(
+                Number(e.target.value)
+              )
+            }
+            style={inputStyle}
+          />
 
-        <br />
-        <br />
+          <br /><br />
 
-        <label>
-          Room Height (inch)
-        </label>
+          <label>Room Height (inch)</label>
+          <input
+            type="number"
+            value={heightInch}
+            onChange={(e) =>
+              setHeightInch(
+                Number(e.target.value)
+              )
+            }
+            style={inputStyle}
+          />
 
-        <input
-          type="number"
-          value={heightInch}
-          onChange={(e) =>
-            setHeightInch(
-              Number(e.target.value)
-            )
-          }
-        />
+          <hr />
 
-        <hr />
+          <label>Tile Width (inch)</label>
+          <input
+            type="number"
+            value={tileWidthInch}
+            onChange={(e) =>
+              setTileWidthInch(
+                Number(e.target.value)
+              )
+            }
+            style={inputStyle}
+          />
 
-        <label>
-          Tile Width (inch)
-        </label>
+          <br /><br />
 
-        <input
-          type="number"
-          value={tileWidthInch}
-          onChange={(e) =>
-            setTileWidthInch(
-              Number(e.target.value)
-            )
-          }
-        />
+          <label>Tile Height (inch)</label>
+          <input
+            type="number"
+            value={tileHeightInch}
+            onChange={(e) =>
+              setTileHeightInch(
+                Number(e.target.value)
+              )
+            }
+            style={inputStyle}
+          />
 
-        <br />
-        <br />
+          <hr />
 
-        <label>
-          Tile Height (inch)
-        </label>
+          <label>Tiles Per Box</label>
+          <input
+            type="number"
+            value={tilesPerBox}
+            onChange={(e) =>
+              setTilesPerBox(
+                Number(e.target.value)
+              )
+            }
+            style={inputStyle}
+          />
 
-        <input
-          type="number"
-          value={tileHeightInch}
-          onChange={(e) =>
-            setTileHeightInch(
-              Number(e.target.value)
-            )
-          }
-        />
+          <br /><br />
 
-        <hr />
+          <label>Wastage %</label>
+          <input
+            type="number"
+            value={wastagePercent}
+            onChange={(e) =>
+              setWastagePercent(
+                Number(e.target.value)
+              )
+            }
+            style={inputStyle}
+          />
 
-        <label>
-          Tiles Per Box
-        </label>
+          <hr />
 
-        <input
-          type="number"
-          value={tilesPerBox}
-          onChange={(e) =>
-            setTilesPerBox(
-              Number(e.target.value)
-            )
-          }
-        />
+          <h4>Calculator</h4>
 
-        <br />
-        <br />
+          <p>
+            Area: {roomArea.toFixed(2)} sq ft
+          </p>
 
-        <label>
-          Wastage %
-        </label>
+          <p>
+            Tiles Required: {tilesRequired}
+          </p>
 
-        <input
-          type="number"
-          value={wastagePercent}
-          onChange={(e) =>
-            setWastagePercent(
-              Number(e.target.value)
-            )
-          }
-        />
+          <p>
+            With Wastage: {tilesWithWaste}
+          </p>
 
-        <hr />
+          <p>
+            Boxes Required: {boxesRequired}
+          </p>
 
-        <h4>Door Cutout</h4>
+          <hr />
 
-        <input
-          type="number"
-          value={doorWidth}
-          onChange={(e) =>
-            setDoorWidth(
-              Number(e.target.value)
-            )
-          }
-          placeholder="Door Width"
-        />
+          <select
+            value={viewMode}
+            onChange={(e) =>
+              setViewMode(e.target.value)
+            }
+            style={inputStyle}
+          >
+            <option value="floor">
+              Floor Only
+            </option>
 
-        <br />
-        <br />
+            <option value="walls">
+              Walls Only
+            </option>
 
-        <input
-          type="number"
-          value={doorHeight}
-          onChange={(e) =>
-            setDoorHeight(
-              Number(e.target.value)
-            )
-          }
-          placeholder="Door Height"
-        />
+            <option value="both">
+              Floor + Walls
+            </option>
+          </select>
 
-        <hr />
-
-        <h4>Window Cutout</h4>
-
-        <input
-          type="number"
-          value={windowWidth}
-          onChange={(e) =>
-            setWindowWidth(
-              Number(e.target.value)
-            )
-          }
-          placeholder="Window Width"
-        />
-
-        <br />
-        <br />
-
-        <input
-          type="number"
-          value={windowHeight}
-          onChange={(e) =>
-            setWindowHeight(
-              Number(e.target.value)
-            )
-          }
-          placeholder="Window Height"
-        />
-
-        <hr />
-
-        <h4>Calculator</h4>
-
-        <p>
-          Area:
-          {" "}
-          {roomArea.toFixed(2)}
-          {" "}
-          sq ft
-        </p>
-
-        <p>
-          Tiles:
-          {" "}
-          {tilesRequired}
-        </p>
-
-        <p>
-          With Waste:
-          {" "}
-          {tilesWithWaste}
-        </p>
-
-        <p>
-          Boxes:
-          {" "}
-          {boxesRequired}
-        </p>
-
-        <hr />
-
-        <button>
-          📸 Save Screenshot
-        </button>
-
-        <hr />
-        <select
-          value={viewMode}
-          onChange={(e) =>
-            setViewMode(e.target.value)
-          }
-        >
-          <option value="floor">
-            Floor Only
-          </option>
-
-          <option value="walls">
-            Walls Only
-          </option>
-
-          <option value="both">
-            Floor + Walls
-          </option>
-        </select>
-      </div>
-
+        </div>
+      )}
       <div
         style={{
           width: "100vw",
@@ -555,8 +522,10 @@ export default function App() {
       >
         <Canvas
           camera={{
-            position: [6, 4, 6],
-            fov: 50,
+            position: isMobile
+              ? [4, 3, 4]
+              : [6, 4, 6],
+            fov: isMobile ? 60 : 50,
           }}
         >
           <Room
@@ -570,11 +539,13 @@ export default function App() {
             viewMode={viewMode}
           />
 
-          <OrbitControls />
-
-          <gridHelper
-            args={[20, 20]}
+          <OrbitControls
+            enablePan={true}
+            enableZoom={true}
+            enableRotate={true}
           />
+
+          <gridHelper args={[20, 20]} />
         </Canvas>
       </div>
     </>
